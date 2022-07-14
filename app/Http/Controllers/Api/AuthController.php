@@ -20,6 +20,7 @@ class AuthController extends Controller
             'mobile' => 'string|required',
             'password' => 'string|required',
             'email' => 'email|required',
+
         ]);
 
         $user = User::create([
@@ -31,9 +32,10 @@ class AuthController extends Controller
             'mobile' => $request->mobile,
             'email' => $request->email,
             'password' => bcrypt($request->password),
+
         ]);
 
-        auth()->login($user);
+       
 
         $token = $user->createToken("API")->plainTextToken;
 
@@ -41,10 +43,37 @@ class AuthController extends Controller
             'status'=>'success',
             'message'=>'User registered successfully',
             'user' => $user,
-            'authorisation'=>[
-                'token' => $token,
-                'type' => 'bearer'
-            ]
+            'token' => $token,
+            
+        ]);
+    }
+
+
+    public function login(Request $request) {
+        $request->validate([
+            'email'=>'email|required',
+            'password'=>'string|required'
+        ]);
+
+        $login = auth()->attempt($request->only('email','password'));
+
+        if(!$login) {
+            return response()->json([
+                'status'=>'error',
+                'message'=>'Invalid user credentials'
+            ],);
+        }
+
+        $user = auth()->user();
+
+        $token = $user->createToken('auth')->plainTextToken;
+
+        return response()->json([
+            'status'=>'success',
+            'message'=>'Logged in successfully',
+            'user' => $user,
+            'token'=>$token,
+            
         ]);
     }
 
@@ -53,40 +82,10 @@ class AuthController extends Controller
     }
 
     public function logout() {
-        Auth::user()->tokens()->delete();
+        auth()->user()->tokens()->delete();
         return response()->json([
             'status'=>'success',
             'message'=>'User has been logged out.'
-        ]);
-    }
-
-    public function login(Request $request) {
-        $request->validate([
-            'email'=>'email|required',
-            'password'=>'string|required'
-        ]);
-
-        $login = Auth::attempt($request->only('email','password'));
-
-        if(!$login) {
-            return response()->json([
-                'status'=>'error',
-                'message'=>'Invalid user credentials'
-            ], Response::HTTP_UNAUTHORIZED);
-        }
-
-        $user = Auth::user();
-
-        $token = $user->createToken('API')->plainTextToken;
-
-        return response()->json([
-            'status'=>'success',
-            'message'=>'Logged in successfully',
-            'user' => $user,
-            'authorization'=>[
-                'token'=>$token,
-                'type'=>'bearer'
-            ]
         ]);
     }
 }
