@@ -20,7 +20,6 @@ class AuthController extends Controller
             'mobile' => 'string|required',
             'password' => 'string|required',
             'email' => 'email|required',
-
         ]);
 
         $user = User::create([
@@ -32,10 +31,9 @@ class AuthController extends Controller
             'mobile' => $request->mobile,
             'email' => $request->email,
             'password' => bcrypt($request->password),
-
         ]);
 
-       
+        auth()->login($user);
 
         $token = $user->createToken("API")->plainTextToken;
 
@@ -44,7 +42,7 @@ class AuthController extends Controller
             'message'=>'User registered successfully',
             'user' => $user,
             'token' => $token,
-            
+          
         ]);
     }
 
@@ -55,25 +53,25 @@ class AuthController extends Controller
             'password'=>'string|required'
         ]);
 
-        $login = auth()->attempt($request->only('email','password'));
+        $login = Auth::attempt($request->only('email','password'));
 
         if(!$login) {
             return response()->json([
                 'status'=>'error',
                 'message'=>'Invalid user credentials'
-            ],);
+            ], Response::HTTP_UNAUTHORIZED);
         }
 
-        $user = auth()->user();
+        $user = Auth::user();
 
-        $token = $user->createToken('auth')->plainTextToken;
+        $token = $user->createToken('API')->plainTextToken;
 
         return response()->json([
             'status'=>'success',
             'message'=>'Logged in successfully',
             'user' => $user,
             'token'=>$token,
-            
+        
         ]);
     }
 
@@ -82,7 +80,7 @@ class AuthController extends Controller
     }
 
     public function logout() {
-        auth()->user()->tokens()->delete();
+        Auth::user()->tokens()->delete();
         return response()->json([
             'status'=>'success',
             'message'=>'User has been logged out.'

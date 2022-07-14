@@ -11,4 +11,6 @@ class ShoutController extends Controller
         $shouts = Shout::orderBy('created_at','desc')->limit(50)->get();
         return response()->json($shouts);
     }
+
+   
 }
